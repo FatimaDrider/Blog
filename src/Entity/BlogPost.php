@@ -3,8 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\BlogPostRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: BlogPostRepository::class)]
 class BlogPost
@@ -15,18 +19,25 @@ class BlogPost
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['blog'])]
+    #[Assert\NotBlank(message: 'Please enter a title')]
+    #[Assert\Length(min: 5, max: 255)]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['blog'])]
     private ?string $content = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['blog'])]
     private ?string $author = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups(['blog'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['blog'])]
     private ?string $coverImage = null;
 
     #[ORM\Column(length: 255,nullable: true)]
@@ -34,6 +45,9 @@ class BlogPost
 
     #[ORM\Column(length: 255,nullable: true)]
     private ?string $categorie = null;
+
+    #[ORM\OneToMany(mappedBy: 'blog', targetEntity: Comment::class)]
+    private Collection $comments;
 
     public function getId(): ?int
     {
@@ -123,4 +137,32 @@ class BlogPost
 
         return $this;
     }
+
+    public function __construct()
+    {
+        $this->comments = new ArrayCollection();
+        
+    }
+
+    /**
+     * @return Collection<int, Comment>
+     */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+    public function addComment(Comment $comment): static
+    {
+        $this->comments->add($comment);
+        $comment->setBlog($this);
+        return $this;
+    }
+    public function removeComment(Comment $comment): static
+    {
+        $this->comments->removeElement($comment);
+        return $this;
+    }
+
+
+
 }
